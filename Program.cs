@@ -84,7 +84,13 @@
         {
             foreach (var tag in storage.GetAllTags())
             {
-                Console.WriteLine($"Путь тега: {tag.FullPath}, Уровень вложенности тега: {tag.Level}, Тип данных тега: {tag.valueType.Name}, Значение тега: {tag.GetTagValue()}");
+                string valueToDisplay = tag.GetTagValue() switch
+                {
+                    double doubleValue => doubleValue.ToString("G17", System.Globalization.CultureInfo.InvariantCulture),
+                    _ => tag.GetTagValue()?.ToString()
+                };
+
+                Console.WriteLine($"Путь тега: {tag.FullPath}, Уровень вложенности тега: {tag.Level}, Тип данных тега: {tag.ValueType.Name}, Значение тега: {valueToDisplay}");
             }
         }
 
@@ -92,14 +98,13 @@
         {
             Console.Write("Введите полный путь тега, для удаления: ");
             string fullPath = Console.ReadLine();
-
             var tag = storage.FindTagByFullPath(fullPath);
 
             if (tag != null && tag != storage.Root)
             {
                 tag.ParentTag.RemoveChildTag(tag.TagName);
-                tag.UpdateFullpath();
-                tag.ParentTag.UpdateFullpath();
+                tag.UpdateFullPath();
+                tag.ParentTag.UpdateFullPath();
                 Console.WriteLine("Удаления тега прошло успешно.");
             }
             else
@@ -142,7 +147,7 @@
 
                 var newTag = new TagItem(name, value);
                 parent.AddChildTag(newTag);
-                parent.UpdateFullpath();
+                parent.UpdateFullPath();
                 Console.WriteLine("Новый тег успешно добавлен.");
             }
             else
@@ -163,7 +168,7 @@
                 Console.Write("Введите новое имя тега: ");
                 string newName = Console.ReadLine();
                 tag.TagName = newName;
-                tag.UpdateFullpath();
+                tag.UpdateFullPath();
 
                 //Console.Write("Новое имя тега: " + tag.TagName);
                 //Console.Write("Полный путь тега: " + tag.FullPath);

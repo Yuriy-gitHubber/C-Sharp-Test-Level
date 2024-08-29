@@ -1,127 +1,124 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using System.Xml.Linq;
 
-namespace C__Test
+internal class TagStorage
 {
-    internal class TagStorage
+    public TagItem Root { get; private set; } //Метод возврата и установки экземпляра класса TagItem - корневой тег
+
+    public TagStorage() //Конструктор
     {
-        public TagItem Root { get; private set; } //Метод возврата и установки экземпляра класса TagItem - корневой тег
+        Root = new TagItem("Root");
+    }
 
-        public TagStorage() //Конструктор
+    public TagItem FindTagByFullPath(string fullPath) //Метод поиска тега по его полному пути
+    {
+        if (string.IsNullOrEmpty(fullPath))
         {
-            Root = new TagItem("Root");
+            return null;
         }
 
-        public TagItem FindTagByFullPath(string fullPath) //Метод поиска тега по его полному пути
+        string[] segments = fullPath.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+
+        TagItem currentTag = Root;
+
+        foreach (var s in segments)
         {
-            if (string.IsNullOrEmpty(fullPath))
+            if (currentTag == null)
             {
                 return null;
             }
+            currentTag = currentTag.GetChildTag(s);
+        }
+        return currentTag;
+    }
 
-            string[] strings = fullPath.Split(new [] {'.'}, StringSplitOptions.RemoveEmptyEntries);
+    public void SaveToFile(string fileName) //Метод сохранения дерева тегов в файл
+    {
+        var xml = SaveTagToXml(Root);
+        xml.Save(fileName, SaveOptions.None);
+    }
 
-            TagItem current_tag = Root;
+    public void LoadFromFile(string fileName) //Метод выгрузки дерева тегов из файла
+    {
+        if (!File.Exists(fileName))
+        {
+            throw new FileNotFoundException("Файл не найден", fileName);
+        }
 
-            foreach (var s in strings)
+        var xml = XElement.Load(fileName);
+        Root = LoadTagFromXml(xml, null);
+    }
+
+    private XElement SaveTagToXml(TagItem tag) //Метод сохранения тегов в xml файл
+    {
+        var element = new XElement(tag.TagName);
+        if (!tag.GetDirectChildren().Any())
+        {
+            if (tag.GetTagValue() != null)
             {
-               
-                if(current_tag == null)
+                if (tag.GetTagValue() is double doubleValue)
                 {
-                    return null;
+                    element.Value = doubleValue.ToString(CultureInfo.InvariantCulture);
                 }
-                current_tag = current_tag.GetChildTag(s);
-
-                //if (current_tag != null)
-                //{
-                //    Console.WriteLine($"Текущий тег: {current_tag.TagName}, полный путь: {current_tag.FullPath}");
-                //}
-                //else
-                //{
-                //    Console.WriteLine($"Тег с именем '{s}' не найден в пути '{fullPath}'");
-                //}
-
+                else
+                {
+                    element.Value = tag.GetTagValue().ToString();
+                }
             }
-            return current_tag;
-     
         }
-        public void SaveToFile(string fileName) //Метод сохранения дерева тегов в файл
+        foreach (var child in tag.GetDirectChildren())
         {
-            var xml =  SaveTagToXml(Root);
-
-            xml.Save(fileName,SaveOptions.None);
+            element.Add(SaveTagToXml(child));
         }
-        public void LoadFromFile(string fileName) //Метод выгрузки дерева тегов из файла
+
+        return element;
+    }
+
+    private TagItem LoadTagFromXml(XElement element, TagItem parent) //Метод выгрузки дерева тегов из xml файла
+    {
+        string name = element.Name.LocalName;
+        string value = element.HasElements ? null : element.Value;
+
+        // Парсим значение тега
+        object tagValue = DetermineTagValue(value);
+
+        var tag = new TagItem(name, tagValue, parent);
+
+        foreach (var childElement in element.Elements())
         {
-            if (!File.Exists(fileName))
-            {
-                throw new FileNotFoundException("Файл не найден", fileName);
-            }
-
-            var xml = XElement.Load(fileName);
-            Root = LoadTagFromXml(xml, null);
+            var childTag = LoadTagFromXml(childElement, tag);
+            tag.AddChildTag(childTag);
         }
-        private XElement SaveTagToXml(TagItem tag)//Метод сохранения тегов в xml файл
+
+        return tag;
+    }
+
+    private object DetermineTagValue(string value) // Метод для определения типа значения, переданного в виде строки, и преобразования его в соответствующий тип данных
+    {
+        if (int.TryParse(value, out int intValue))
         {
-            var element = new XElement(tag.TagName, tag.GetTagValue()?.ToString() ?? string.Empty);
-
-            foreach (var child in tag.GetDirectChildren())
-            {
-                element.Add(SaveTagToXml(child));
-            }
-
-            return element;
+            return intValue;
         }
-        private TagItem LoadTagFromXml(XElement element, TagItem parent)//Метод выгрузки дерева тегов из xml файла
+        else if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double doubleValue))
         {
-            string name = element.Name.LocalName;
-            string value = element.Value;
-
-            object tagValue = DetermineTagValue(value);
-
-            var tag = new TagItem(name, tagValue, parent);
-
-            foreach (var childElement in element.Elements())
-            {
-                var childTag = LoadTagFromXml(childElement, tag);
-                tag.AddChildTag(childTag);
-            }
-
-            return tag;
+            return doubleValue;
         }
-        private object DetermineTagValue(string value) // Метод для определения типа значения, переданного в виде строки, и преобразования его в соответствующий тип данных
+        else if (bool.TryParse(value, out bool boolValue))
         {
-            if (int.TryParse(value, out int intValue))
-            {
-                return intValue;
-            }
-            else if (double.TryParse(value, out double doubleValue))
-            {
-                return doubleValue;
-            }
-            else if (bool.TryParse(value, out bool boolValue))
-            {
-                return boolValue;
-            }
-            else
-            {
-                return null;
-            }
+            return boolValue;
         }
-
-        public IEnumerable<TagItem> GetAllTags() //Метод получения всех дочерних тегов
+        else
         {
-            yield return Root;
-            foreach (var child in Root.GetAllChildTags())
-            {
-                yield return child;
-            }
+            return null;
         }
+    }
 
-
+    public IEnumerable<TagItem> GetAllTags() //Метод получения всех дочерних тегов
+    {
+        yield return Root;
+        foreach (var child in Root.GetAllChildTags())
+        {
+            yield return child;
+        }
     }
 }

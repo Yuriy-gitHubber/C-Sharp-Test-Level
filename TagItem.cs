@@ -1,127 +1,100 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace C__Test
+﻿internal class TagItem
 {
-    internal class TagItem
+    private object _tagValue; // Значение тега
+    private string _tagName; // Имя тега
+    private TagItem _parentTag; // Родительский тег
+    private Dictionary<string, TagItem> _childrenTags; // Словарь для хранения дочерних тегов
+    public TagItem ParentTag //Свойство установки и возврата значения 
     {
-        private object _tag_value; //Значение тега
-        private string _tag_name; //Имя тега
+        get { return _parentTag; }
+        private set { _parentTag = value; }
+    }
+    public Type ValueType => _tagValue?.GetType() ?? typeof(void); // Метод возврата типа значения хранимого тегом
 
-        private TagItem _parent_tag;//Родительский тег
-        public TagItem ParentTag //Свойство установки и возврата значения 
+    public object GetTagValue() { return _tagValue; } // Метод возврата значения тега
+
+    public string TagName
+    {
+        get { return _tagName; }
+        set
         {
-            get { return _parent_tag; }
-            private set { _parent_tag = value; } 
-        }
-
-        private Dictionary<string, TagItem> _children_tags; //Словарь дя хранения тегов
-
-        public Type valueType => _tag_value?.GetType() ?? typeof(void); //Метод возврата типа значения хранимого тегом
-
-        public Object GetTagValue() { return _tag_value; }// Метод возврата значения тега
-        public string TagName //Свойство возврата и установки Имени тега
-        {
-            get
+            if (_parentTag != null)
             {
-                return _tag_name;
+                _parentTag._childrenTags.Remove(_tagName);
+                _tagName = value;
+                _parentTag._childrenTags[_tagName] = this;
             }
-            set
+            else
             {
-                if (_parent_tag != null)
-                {
-               
-                    _parent_tag._children_tags.Remove(_tag_name);
-
-                    
-                    _tag_name = value;
-
-                
-                    _parent_tag._children_tags[_tag_name] = this;
-                }
-                else
-                {
-                    _tag_name = value;
-                }
-
-
-            } 
+                _tagName = value;
+            }
         }
+    }
 
-        public void SetTagValue(object value) { _tag_value = value; } //Метод установки значения тега
+    public void SetTagValue(object value) { _tagValue = value; } // Метод установки значения тега
 
-        public TagItem(string tag_name, object tag_value = null, TagItem parent_tag = null) //Конструктор 
+    public TagItem(string tagName, object tagValue = null, TagItem parentTag = null) // Конструктор 
+    {
+        TagName = tagName;
+        _tagValue = tagValue;
+        _parentTag = parentTag;
+        _childrenTags = new Dictionary<string, TagItem>();
+        Level = _parentTag != null ? _parentTag.Level + 1 : 1;
+        UpdateFullPath();
+    }
+
+    public int Level { get; private set; } // Свойство уровня вложенности
+
+    public string FullPath { get; set; } // Свойство полного пути тега
+
+    public void UpdateFullPath() // Метод обновления полного пути тега
+    {
+        FullPath = _parentTag != null ? $"{_parentTag.FullPath}.{TagName}" : TagName;
+
+        foreach (var child in _childrenTags.Values)
         {
-            TagName = tag_name;
-            _tag_value = tag_value;
-            _parent_tag = parent_tag;
-            _children_tags = new Dictionary<string, TagItem>();
-            Level = _parent_tag != null ? _parent_tag.Level + 1 : 1;
-            UpdateFullpath();
+            child.UpdateFullPath();
         }
+    }
 
-        public int Level { get; private set; } //Свойство установки и возврата уровня вложенности
+    public TagItem GetChildTag(string tagName) // Метод возврата дочерних тегов
+    {
+        return _childrenTags.ContainsKey(tagName) ? _childrenTags[tagName] : null;
+    }
 
-        public string FullPath { get; set; } //Свойство установки и возврата полного пути тега
-
-       public void UpdateFullpath() //Метод обновления полного пути тега
+    public void AddChildTag(TagItem childTag) // Метод добавления дочерних тегов
+    {
+        if (childTag != null && !_childrenTags.ContainsKey(childTag.TagName))
         {
+            _childrenTags[childTag.TagName] = childTag;
+            childTag._parentTag = this;
+            childTag.Level = this.Level + 1;
+            childTag.UpdateFullPath();
+        }
+    }
 
-            // Обновляем полный путь для текущего тега
-            FullPath = _parent_tag != null ? $"{_parent_tag.FullPath}.{TagName}" : TagName;
+    public void RemoveChildTag(string childTagName) // Метод удаления тега
+    {
+        if (_childrenTags.ContainsKey(childTagName))
+        {
+            _childrenTags.Remove(childTagName);
+        }
+    }
 
-            //Console.WriteLine($"Путь обновлен: {FullPath}");
+    public IEnumerable<TagItem> GetDirectChildren() // Метод возврата прямых дочерних тегов
+    {
+        return _childrenTags.Values;
+    }
 
-            // Рекурсивно обновляем полный путь для всех дочерних тегов
-            foreach (var child in _children_tags.Values)
+    public IEnumerable<TagItem> GetAllChildTags() // Рекурсивный метод возврата всех потомков текущего тега
+    {
+        foreach (var child in _childrenTags.Values)
+        {
+            yield return child;
+            foreach (var descendant in child.GetAllChildTags())
             {
-                child.UpdateFullpath();
+                yield return descendant;
             }
         }
-
-
-        public TagItem GetChildTag(string tag_name) //Метод возврата дочерних тегов
-        {
-            return _children_tags.ContainsKey(tag_name) ? _children_tags[tag_name] : null;
-        }
-
-        public void AddChildTag(TagItem child_tag) //Метод добавления дочерних тегов
-        {
-            if(child_tag != null && !_children_tags.ContainsKey(child_tag.TagName)) 
-            {
-                _children_tags[child_tag.TagName] = child_tag;
-                child_tag._parent_tag = this;
-                child_tag.Level = this.Level + 1;
-                child_tag.UpdateFullpath() ;
-            }
-        }
-        
-        public void RemoveChildTag(string child_tag_name) //Метод удаления тега
-        {
-            if (_children_tags.ContainsKey(child_tag_name)){
-
-                _children_tags.Remove(child_tag_name);
-            }
-        }
-        public IEnumerable<TagItem> GetDirectChildren() //Метод возврата прямых дочерних тегов
-        {
-            return _children_tags.Values;
-        }
-        public IEnumerable<TagItem> GetAllChildTags() //Рекурсивный метод возврата всех потомков текущего тега
-        {
-            foreach(var child in _children_tags.Values)
-            { 
-                yield return child;
-                foreach (var descendant in child.GetAllChildTags())
-                {
-                    yield return descendant;
-                }
-
-            }
-        }
-
     }
 }

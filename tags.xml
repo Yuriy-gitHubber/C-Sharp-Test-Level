@@ -1,53 +1,32 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Root>
   <Server>
-    <CPULoad></CPULoad>
+    <CPULoad>45.5</CPULoad>
     <RAMUsage>16284</RAMUsage>
     <DiskUsage>
       <TotalSpace>512000</TotalSpace>
       <UsedSpace>320000</UsedSpace>
-      <FreeSpace></FreeSpace>
+      <FreeSpace />
       <DetailedUsage>
-        <Partition1>∞<Size>256000</Size><Used>128000</Used><Free>128000</Free></Partition1>
-        <Partition2>2,5600019200064E+33<Size>256000</Size><Used>192000</Used><Free>64000</Free></Partition2>
+        <Partition1>
+          <Size>2.5600019200064E+33</Size>
+          <Used>128000</Used>
+          <Free>128000</Free>
+        </Partition1>
+        <Partition2>
+          <Size>256000</Size>
+          <Used>
+            <Realy>True</Realy>
+          </Used>
+          <Freeee>
+            <Price />
+          </Freeee>
+        </Partition2>
       </DetailedUsage>
     </DiskUsage>
-    <Temperature></Temperature>
-    <IsOperational>True</IsOperational>
+    <Temperature>72.5</Temperature>
+    <IsOperational>
+      <New>2222</New>
+    </IsOperational>
   </Server>
-  <Network>
-    <IPAddress>0</IPAddress>
-    <SubnetMask>24</SubnetMask>
-    <Gateway>1</Gateway>
-    <DNS>
-      <PrimaryDNS></PrimaryDNS>
-      <SecondaryDNS></SecondaryDNS>
-    </DNS>
-    <FirewallEnabled>True</FirewallEnabled>
-  </Network>
-  <Storage>
-    <RAIDLevel>5</RAIDLevel>
-    <ArraySize>409600</ArraySize>
-    <HealthStatus>0</HealthStatus>
-    <DriveCount>8</DriveCount>
-    <DriveDetails>
-      <Drive1>1,0000075000100001E+21<Capacity>100000</Capacity><UsedSpace>75000</UsedSpace></Drive1>
-      <Drive2>1,0000050000100001E+21<Capacity>100000</Capacity><UsedSpace>50000</UsedSpace></Drive2>
-    </DriveDetails>
-  </Storage>
-  <Power>
-    <PowerSupplyCount>2</PowerSupplyCount>
-    <MainSupplyOperational>True</MainSupplyOperational>
-    <BackupSupplyOperational>True</BackupSupplyOperational>
-    <Battery>
-      <BatteryCharge></BatteryCharge>
-      <BatteryHealth></BatteryHealth>
-    </Battery>
-  </Power>
-  <Environment>
-    <AmbientTemperature></AmbientTemperature>
-    <Humidity></Humidity>
-    <SmokeDetected>False</SmokeDetected>
-    <AirQuality>35012023501202<Level>350</Level><VOCLevel>120</VOCLevel><PollutionIndex>2</PollutionIndex></AirQuality>
-  </Environment>
 </Root>
